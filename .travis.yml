@@ -9,7 +9,7 @@ cache:
     directories:
       - $HOME/docker
 
-before_install: docker load -i $HOME/docker/image.tar
+before_install: gzip -dc $HOME/docker/image.tar.gz | docker load
 
 jobs:
     include:
@@ -17,7 +17,7 @@ jobs:
         before_install: skip
         script:
           - docker build --rm=false -t jpreynat/docker-test .
-          - mkdir -p $HOME/docker; docker save jpreynat/docker-test > $HOME/docker/image.tar
+          - mkdir -p $HOME/docker; docker save jpreynat/docker-test | gzip > $HOME/docker/image.tar.gz
       - stage: Test and lint
         script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn test"
       - script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn lint"
