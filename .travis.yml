@@ -12,5 +12,6 @@ before_install:
 
 jobs:
   include:
-    - stage: Test
+    - stage: Test and lint
       script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn test"
+    - script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn lint"
