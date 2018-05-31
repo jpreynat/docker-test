@@ -4,14 +4,20 @@ services:
   - docker
 
 language: node_js
-node_js:
-  - "6.14.0"
+
+cache:
+  directories:
+  - $HOME/docker
 
 before_install:
-  - docker build -t jpreynat/docker-test .
+  - if [[ -e $HOME/docker/image.tar ]]; then docker load -i $HOME/docker/image.tar; fi
+  - docker build --rm=false -t jpreynat/docker-test .
+  - mkdir -p $HOME/docker; docker save jpreynat/docker-test > $HOME/docker/image.tar
 
 jobs:
   include:
+    - stage: Build image
+      script: skip
     - stage: Test and lint
       script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn test"
     - script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn lint"
