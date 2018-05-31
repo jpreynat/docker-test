@@ -1,0 +1,16 @@
+sudo: required
+
+services:
+  - docker
+
+language: node_js
+node_js:
+  - "6.14.0"
+
+before_install:
+  - docker build -t jpreynat/docker-test .
+
+jobs:
+  include:
+    - stage: Test
+      script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn test"
