@@ -1,31 +1,34 @@
 sudo: required
+language: generic
 
 services:
     - docker
-
-language: generic
-
 cache:
+    apt: true
     directories:
       - $HOME/docker
+addons:
+    apt:
+        packages:
+          - lzop
 
 before_install:
   - export IMAGE=docker-test
   - export DOCKER_DIR=$HOME/docker
   - export APP_DIR=/app
 install:
-  - gzip -dc $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.tar.gz | docker load
+  - lzop -1 $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.lzo | docker load
 
 jobs:
     include:
       - stage: Build image
         install:
-          - if [[ -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz ]]; then gzip -dc $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz | docker load; fi
+          - if [[ -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo ]]; then lzo -d $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo | docker load; fi
         script:
           - mkdir -p $DOCKER_DIR
           - docker build --rm=false --cache-from $IMAGE:$TRAVIS_BRANCH -t $IMAGE:$TRAVIS_COMMIT .
-          - if [[ ! -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz ]]; then docker tag $IMAGE:$TRAVIS_COMMIT $IMAGE:$TRAVIS_BRANCH; docker save $IMAGE:$TRAVIS_BRANCH | gzip > $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz; fi
-          - docker save $IMAGE:$TRAVIS_COMMIT | gzip > $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.tar.gz
+          - if [[ ! -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo ]]; then docker tag $IMAGE:$TRAVIS_COMMIT $IMAGE:$TRAVIS_BRANCH; docker save $IMAGE:$TRAVIS_BRANCH | lzo -1 > $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo; fi
+          - docker save $IMAGE:$TRAVIS_COMMIT | lzo -1 > $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.lzo
       - stage: Test and lint
         script: docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd $APP_DIR; yarn test"
       - script: docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd $APP_DIR; yarn lint"
