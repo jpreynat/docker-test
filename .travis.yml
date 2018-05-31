@@ -9,17 +9,16 @@ cache:
     directories:
       - $HOME/docker
 
-env:
-  - IMAGE=docker-test
-  - DOCKER_DIR=$HOME/docker
-
 before_install:
+  - export IMAGE=docker-test
+  - export DOCKER_DIR=$HOME/docker
+install:
   - gzip -dc $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.tar.gz | docker load
 
 jobs:
     include:
       - stage: Build image
-        before_install:
+        install:
           - if [[ -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz ]]; then gzip -dc $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz | docker load; fi
         script:
           - mkdir -p $DOCKER_DIR
