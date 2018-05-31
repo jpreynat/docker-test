@@ -17,7 +17,7 @@ before_install:
   - export DOCKER_DIR=$HOME/docker
   - export APP_DIR=/app
 install:
-  - lzop -1 $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.lzo | docker load
+  - lzop -d $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.lzo | docker load
 
 jobs:
     include:
