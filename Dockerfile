@@ -41,9 +41,9 @@ ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 # Install yarn
 RUN curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.6.0
 
-# Clone the repository
-RUN git clone https://github.com/jpreynat/docker-test /root/docker-test
+# Copy code
+COPY . /app/
+RUN cd /app
 
 # Install dependencies
-RUN cd /root/docker-test && \
-    yarn --frozen-lockfile
+RUN yarn --frozen-lockfile
