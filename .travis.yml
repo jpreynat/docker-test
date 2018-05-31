@@ -9,15 +9,23 @@ cache:
     directories:
       - $HOME/docker
 
-before_install: gzip -dc $HOME/docker/image.tar.gz | docker load
+env:
+  - IMAGE=docker-test
+  - DOCKER_DIR=$HOME/docker
+
+before_install:
+  - gzip -dc $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.tar.gz | docker load
 
 jobs:
     include:
       - stage: Build image
-        before_install: skip
+        before_install:
+          - if [[ -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz ]]; then gzip -dc $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz | docker load; fi
         script:
-          - docker build --rm=false -t jpreynat/docker-test .
-          - mkdir -p $HOME/docker; docker save jpreynat/docker-test | gzip > $HOME/docker/image.tar.gz
+          - mkdir -p $DOCKER_DIR
+          - docker build --rm=false --cache-from $IMAGE:$TRAVIS_BRANCH -t $IMAGE:$TRAVIS_COMMIT .
+          - if [[ ! -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz ]]; then docker tag $IMAGE:$TRAVIS_COMMIT $IMAGE:$TRAVIS_BRANCH; docker save $IMAGE:$TRAVIS_BRANCH | gzip > $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.tar.gz; fi
+          - docker save $IMAGE:$TRAVIS_COMMIT | gzip > $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.tar.gz
       - stage: Test and lint
-        script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn test"
-      - script: docker run jpreynat/docker-test /bin/sh -c "cd /root/docker-test; yarn lint"
+        script: docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd /root/docker-test; yarn test"
+      - script: docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd /root/docker-test; yarn lint"
