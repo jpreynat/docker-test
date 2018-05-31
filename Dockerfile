@@ -43,7 +43,7 @@ RUN curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.6.0
 
 # Copy code
 COPY . /app/
-RUN cd /app
 
 # Install dependencies
-RUN yarn --frozen-lockfile
+RUN cd /app && \
+    yarn --frozen-lockfile
