@@ -1,5 +1,5 @@
 describe('test', () => {
-  it('should ensure that tests are run on Travis', () => {
+  it('should ensure that tests run on Travis', () => {
     expect(true).toBe(true);
   });
 });
