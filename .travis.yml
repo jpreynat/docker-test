@@ -1,34 +1,40 @@
-sudo: required
-language: generic
+sudo: false
+dist: trusty
+language: node_js
+node_js: 6.14.0
 
-services:
-    - docker
 cache:
     apt: true
+    yarn: true
     directories:
-      - $HOME/docker
+      - node_modules
+      - $HOME/google-cloud-sdk
 addons:
     apt:
+        sources:
+          - ubuntu-toolchain-r-test
         packages:
-          - lzop
-env:
-    global:
-      - DOCKER_DIR=$HOME/docker
-      - IMAGE=docker-test
-      - APP_DIR=/app
+          - g++-4.8
+          - nasm
 
-install:
-  - ./scripts/load-commit-image.sh
+before_install:
+  # Set envs
+  - export CXX=g++-4.8
+  - export PATH=$HOME/.yarn/bin:${HOME}/google-cloud-sdk/bin:$PATH
+  # Install Google Cloud utils, the folder is created by travis since it's being cached
+  - if [ ! -d "$HOME/google-cloud-sdk/bin" ]; then rm -rf $HOME/google-cloud-sdk; export CLOUDSDK_CORE_DISABLE_PROMPTS=1; curl https://sdk.cloud.google.com | bash > /dev/null; fi
+  # Auth with Google Cloud utils
+  - source $HOME/google-cloud-sdk/path.bash.inc
+  # Install yarn
+  - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.6.0
 
 jobs:
     include:
-      - stage: Build image
-        install:
-          - ./scripts/load-branch-image.sh
+      - stage: Prepare
         script:
-          - ./scripts/docker-build.sh
+          - yarn --frozen-lockfile
       - stage: Test and lint
         script:
-          - docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd $APP_DIR; yarn test"
+          - yarn test
       - script:
-          - docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd $APP_DIR; yarn lint"
+          - yarn lint
