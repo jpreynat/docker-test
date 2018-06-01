@@ -11,24 +11,25 @@ addons:
     apt:
         packages:
           - lzop
+env:
+    global:
+      - DOCKER_DIR=$HOME/docker
+      - IMAGE=docker-test
+      - APP_DIR=/app
 
-before_install:
-  - export IMAGE=docker-test
-  - export APP_DIR=/app
 install:
-  - echo $IMAGE:$TRAVIS_COMMIT.lzo
-  - lzop -d $HOME/docker/$IMAGE:$TRAVIS_COMMIT.lzo | docker load
+  - lzop -d $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.lzo | docker load
 
 jobs:
     include:
       - stage: Build image
         install:
-          - if [[ -e $HOME/docker/$IMAGE:$TRAVIS_BRANCH.lzo ]]; then lzop -d $HOME/docker/$IMAGE:$TRAVIS_BRANCH.lzo | docker load; fi
+          - if [[ -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo ]]; then lzop -d $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo | docker load; fi
         script:
-          - mkdir -p $HOME/docker
+          - mkdir -p $DOCKER_DIR
           - docker build --rm=false --cache-from $IMAGE:$TRAVIS_BRANCH -t $IMAGE:$TRAVIS_COMMIT .
-          - if [[ ! -e $HOME/docker/$IMAGE:$TRAVIS_BRANCH.lzo ]]; then docker tag $IMAGE:$TRAVIS_COMMIT $IMAGE:$TRAVIS_BRANCH; docker save $IMAGE:$TRAVIS_BRANCH | lzop -1 > $HOME/docker/$IMAGE:$TRAVIS_BRANCH.lzo; fi
-          - docker save $IMAGE:$TRAVIS_COMMIT | lzop -1 > $HOME/docker/$IMAGE:$TRAVIS_COMMIT.lzo
+          - if [[ ! -e $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo ]]; then docker tag $IMAGE:$TRAVIS_COMMIT $IMAGE:$TRAVIS_BRANCH; docker save $IMAGE:$TRAVIS_BRANCH | lzop -1 > $DOCKER_DIR/$IMAGE:$TRAVIS_BRANCH.lzo; fi
+          - docker save $IMAGE:$TRAVIS_COMMIT | lzop -1 > $DOCKER_DIR/$IMAGE:$TRAVIS_COMMIT.lzo
       - stage: Test and lint
         script: docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd $APP_DIR; yarn test"
       - script: docker run $IMAGE:$TRAVIS_COMMIT /bin/sh -c "cd $APP_DIR; yarn lint"
