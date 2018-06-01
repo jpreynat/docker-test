@@ -16,6 +16,7 @@ before_install:
   - export IMAGE=docker-test
   - export APP_DIR=/app
 install:
+  - echo $IMAGE:$TRAVIS_COMMIT.lzo
   - lzop -d $HOME/docker/$IMAGE:$TRAVIS_COMMIT.lzo | docker load
 
 jobs:
